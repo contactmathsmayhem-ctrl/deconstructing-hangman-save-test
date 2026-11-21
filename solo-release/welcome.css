@@ -1,0 +1,12 @@
+/* Solo is the primary action. Friend play is a visible future feature. */
+#gameWelcome .welcome-solo{left:28%!important;top:49%!important;width:44%!important;height:17%!important;z-index:6!important;background:linear-gradient(180deg,#087c3f,#034f28 58%,#003c25)!important}
+#gameWelcome .welcome-friend{left:29%!important;top:67%!important;width:43%!important;height:17%!important;overflow:hidden;background:linear-gradient(180deg,#432457,#291438)!important;border-color:#a7aa85!important;box-shadow:0 0 0 2px #251330,inset 0 0 12px #927fa044!important;color:#eee6f3!important;filter:saturate(.7);gap:5px!important}
+#gameWelcome .welcome-friend>span{font-size:clamp(11px,2vw,25px)!important;padding:0 14% 0 4%}
+#gameWelcome .welcome-friend>small{font-size:clamp(9px,1.2vw,16px)!important;padding:0 14% 0 4%;max-width:90%;line-height:1.25}
+#gameWelcome .coming-ribbon{position:absolute;right:-8%;top:26%;width:58%;transform:rotate(35deg);padding:6px 0;background:#c5ff35;color:#251136;font:bold clamp(8px,1.45vw,19px)/1.05 Arial;font-style:normal;letter-spacing:.03em;text-shadow:none;box-shadow:0 2px 7px #0007;pointer-events:none}
+#gameWelcome .welcome-solo:focus-visible,#gameWelcome .welcome-friend:focus-visible{outline:4px solid white!important;outline-offset:3px}
+#soloComingSoon[hidden]{display:none!important}
+#soloComingSoon{position:fixed;inset:0;z-index:2147483500;background:#170b28e8;display:grid;place-items:center;padding:20px;box-sizing:border-box}
+#soloComingSoon .coming-soon-card{box-sizing:border-box;width:min(540px,94vw);padding:28px;border:3px solid #baff22;border-radius:24px;background:linear-gradient(#3b1151,#220931);box-shadow:0 0 24px #a3ff3044;text-align:center;color:white;font:20px/1.4 Arial}
+#soloComingSoon h2{margin:0 0 14px;color:#baff22;font-size:clamp(22px,4vw,30px)}
+#soloComingSoon button{width:100%;padding:14px;border:2px solid white;border-radius:14px;background:#baff22;color:#261132;font:bold 18px Arial;cursor:pointer}

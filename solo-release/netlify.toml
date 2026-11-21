@@ -1,0 +1,4 @@
+# For a future separate Solo site with base directory solo-release.
+[build]
+  command = "node build.mjs"
+  publish = "dist"
