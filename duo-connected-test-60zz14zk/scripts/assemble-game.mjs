@@ -1,0 +1,12 @@
+import {readdir,readFile,mkdir,writeFile} from 'node:fs/promises';
+import {gunzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+const partsDirectory=new URL('../game-payload/',import.meta.url);
+const names=(await readdir(partsDirectory)).filter(n=>/^game\.html\.gz\.part\d{3}$/.test(n)).sort();
+if(names.length!==11)throw Error('Expected all eleven game payload parts.');
+const buffers=[];for(const name of names)buffers.push(await readFile(new URL(name,partsDirectory)));
+const html=gunzipSync(Buffer.concat(buffers));
+if(createHash('sha256').update(html).digest('hex')!=='5d328ec9f0964842f88c364575ec119c908f89ad74f0b1036efd8a58106e2090')throw Error('The game payload failed its integrity check.');
+await mkdir(new URL('../public/',import.meta.url),{recursive:true});
+await writeFile(new URL('../public/index.html',import.meta.url),html);
+console.log('Restored exact 60ZZ14ZK game HTML: '+html.length+' bytes.');

@@ -1,0 +1,7 @@
+[build]
+  base = "duo-connected-test-60zz14zk"
+  command = "node scripts/assemble-game.mjs"
+  publish = "public"
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

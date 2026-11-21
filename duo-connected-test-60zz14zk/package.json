@@ -1,0 +1,19 @@
+{
+  "name": "hangman-private-connection-preparation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/assemble-game.mjs && node --test test/*.test.mjs",
+    "dev:connection": "node local-server.mjs"
+  },
+  "dependencies": {
+    "@netlify/database": "2.0.3",
+    "pg": "8.23.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "linkedom": "0.18.15"
+  }
+}

@@ -1,0 +1,6 @@
+[build]
+  command = "node scripts/assemble-game.mjs"
+  publish = "public"
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
