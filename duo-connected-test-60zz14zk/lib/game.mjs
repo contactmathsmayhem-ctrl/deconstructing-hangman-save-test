@@ -19,7 +19,7 @@ function settle(room){if(room.phase!=='question'||!room.players.every(p=>p.answe
 const done=room.players.map(p=>p.lost.length===wagers[p.character].length);room.outcome=done[0]&&done[1]?'draw':done[0]?1:done[1]?0:null;if(typeof room.outcome==='number')room.players[room.outcome].balance+=20;room.phase='result';room.deadline=null;}
 export function advance(room,now=Date.now()){if(room.phase!=='question'||now<room.deadline)return false;for(const p of room.players)if(!p.answered){p.answered=true;p.answer=-1;}settle(room);room.version++;return true;}
 function finishChoices(room){if(!room.players.every(p=>p.next==='ready'))return;for(const p of room.players){p.lost=[];p.next='choice';}room.outcome=null;room.round++;startWagers(room);}
-export function act(room,seat,action,now=Date.now(),allowTest=false){
+export function act(room,seat,action,now=Date.now(),allowTest=false,allowTestTopUp=false){
  if(room.expiresAt<=now)fail('This match has expired.',410);
  if(!action||typeof action.id!=='string'||!/^[-\w]{8,80}$/.test(action.id))fail('An action identifier is required.',400);
  const requestKey=seat+':'+action.id;
@@ -45,6 +45,8 @@ export function act(room,seat,action,now=Date.now(),allowTest=false){
   if(p.next!=='confirm'||room.phase!=='result')fail('Choose the same character first.');p.next='rebuilding';p.rebuildAt=now;
  }else if(kind==='ready'){
   if(p.next!=='rebuilding'||now-p.rebuildAt<9600)fail('Finish rebuilding first.');p.next='ready';p.lost=[];finishChoices(room);
+ }else if(kind==='testTopUp'){
+  if(!allowTestTopUp)fail('Test top-ups are disabled on this server.',403);if(p.balance>9999950)fail('The test balance limit has been reached.',400);p.balance+=50;
  }else if(kind==='testCredit'){
   if(!allowTest)fail('Test credits are disabled on this server.',403);if(!Number.isInteger(action.amount)||action.amount<1||action.amount>1000000||p.balance+action.amount>10000000)fail('Invalid test amount.',400);p.balance+=action.amount;
  }else fail('Unknown action.',400);

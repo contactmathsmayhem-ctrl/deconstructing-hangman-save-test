@@ -1,5 +1,5 @@
 import {GameError,createRoom,joinRoom,authorize,advance,act,snapshot,inviteCode,token} from './game.mjs';
-export function service(repository,{allowTest=false,clock=Date.now}={}){
+export function service(repository,{allowTest=false,allowTestTopUp=false,clock=Date.now}={}){
  return async function handle(request){
   const headers={'Cache-Control':'no-store','Content-Type':'application/json','X-Content-Type-Options':'nosniff'};
   const respond=(body,status=200)=>new Response(JSON.stringify(body),{status,headers});
@@ -21,7 +21,7 @@ export function service(repository,{allowTest=false,clock=Date.now}={}){
     if(!room)throw new GameError('Match not found.',404);if(room.expiresAt<=now)throw new GameError('This match has expired.',410);
     if(data.op==='join'){secret=token();joinRoom(room,data.nickname,secret);return {token:secret,...snapshot(room,1,now)};}
     const seat=authorize(room,secret);const timedOut=advance(room,now);
-    if(data.op==='action'){try{act(room,seat,data.action,now,allowTest);}catch(error){if(timedOut&&error instanceof GameError)return {requestError:{message:error.message,status:error.status}};throw error;}}else if(data.op!=='state')throw new GameError('Unknown operation.',400);
+    if(data.op==='action'){try{act(room,seat,data.action,now,allowTest,allowTestTopUp);}catch(error){if(timedOut&&error instanceof GameError)return {requestError:{message:error.message,status:error.status}};throw error;}}else if(data.op!=='state')throw new GameError('Unknown operation.',400);
     return snapshot(room,seat,now);
    });if(result.requestError)return respond({error:result.requestError.message},result.requestError.status);return respond(result,data.op==='join'?201:200);
   }catch(error){if(error instanceof GameError)return respond({error:error.message},error.status);console.error('Hangman service error:',error.name);return respond({error:'The connection service is unavailable. Please retry.'},503);}
