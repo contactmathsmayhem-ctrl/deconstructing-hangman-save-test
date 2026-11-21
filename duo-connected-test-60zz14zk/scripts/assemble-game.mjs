@@ -8,7 +8,33 @@ const buffers=[];for(const name of names)buffers.push(await readFile(new URL(nam
 const html=gunzipSync(Buffer.concat(buffers));
 if(createHash('sha256').update(html).digest('hex')!=='5d328ec9f0964842f88c364575ec119c908f89ad74f0b1036efd8a58106e2090')throw Error('The game payload failed its integrity check.');
 await mkdir(new URL('../public/',import.meta.url),{recursive:true});
+// Keep large image bytes out of HTML attributes and inline script strings.
+// The source payload hash above still validates the original approved artwork.
+const assets=new Map();
+function assetUrl(mime,base64){
+ const bytes=Buffer.from(base64,'base64');
+ const extension=({'image/png':'png','image/webp':'webp','image/jpeg':'jpg','image/gif':'gif','image/svg+xml':'svg'})[mime];
+ if(!extension)throw Error('Unsupported embedded image: '+mime);
+ const name=createHash('sha256').update(bytes).digest('hex')+'.'+extension;
+ assets.set(name,bytes);return '/game-assets/'+name;
+}
+let optimized=html.toString('utf8').replace(/data:(image\/(?:png|webp|jpeg|gif|svg\+xml));base64,([A-Za-z0-9+/=]+)/g,(_,mime,data)=>assetUrl(mime,data));
+// Four original character workshops store raw base64 in their parts maps.
+// Preserve the surrounding quote encoding at every nested srcdoc level.
+optimized=optimized.replace(/("|'|&(?:amp;)*quot;)((?:iVBORw0KGgo|PHN2Zy|PD94bW)[A-Za-z0-9+/=]{128,})\1/g,(_,quote,data)=>{
+ const bytes=Buffer.from(data,'base64');
+ const mime=bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))?'image/png':/^\s*(?:<\?xml|<svg)/.test(bytes.toString('utf8',0,100))?'image/svg+xml':null;
+ if(!mime)throw Error('Unrecognized character part image.');
+ return quote+assetUrl(mime,data)+quote;
+});
+optimized=optimized.replaceAll("img.src='data:image/png;base64,'+parts[key]","img.src=parts[key]")
+ .replaceAll("img.src='data:image/'+(key==='shoes'?'svg+xml':'png')+';base64,'+parts[key]","img.src=parts[key]");
+if(optimized.length>1000000)throw Error('The game page still contains oversized embedded artwork.');
+await mkdir(new URL('../public/game-assets/',import.meta.url),{recursive:true});
+for(const [name,bytes]of assets)await writeFile(new URL('../public/game-assets/'+name,import.meta.url),bytes);
+console.log('Extracted '+assets.size+' unchanged image files; page is '+optimized.length+' characters.');
+
 const diagnostics='<script id="welcome-navigation-diagnostics">\n(function(){\n const errors=[];let timer;\n window.addEventListener(\'error\',event=>{if(event.message)errors.push(event.message+\' (line \'+event.lineno+\')\');});\n window.addEventListener(\'unhandledrejection\',event=>errors.push(String(event.reason?.message||event.reason)));\n function report(){\n  const loading=document.documentElement.classList.contains(\'dh-selector-start\');\n  const welcome=document.getElementById(\'gameWelcome\');\n  const connection=document.getElementById(\'duoConnection\');\n  if(!loading&&(welcome?.hidden||connection&&!connection.hidden))return;\n  let box=document.getElementById(\'navigationError\');if(!box){box=document.createElement(\'div\');box.id=\'navigationError\';box.style.cssText=\'position:fixed;left:3%;right:3%;top:12px;z-index:2147483647;background:#310b45;color:white;border:3px solid #baff18;border-radius:14px;padding:18px;font:18px/1.5 Arial;white-space:pre-wrap\';document.body.appendChild(box);}\n  box.textContent=\'LOADING CHECK — ZK1\\n\'+(errors.length?errors.join(\'\\n\'):\'No script error recorded.\')+\'\\nGame scripts finished: \'+(window.__dhPageComplete?\'yes\':\'no\')+\'\\nConnection controls created: \'+(connection?\'yes\':\'no\')+\'\\nPlease send a screenshot of this message.\';\n }\n document.addEventListener(\'click\',event=>{if(event.target.closest?.(\'.welcome-hit\')){clearTimeout(timer);timer=setTimeout(report,20000);}},true);\n})();\n</script>\n';
-const page=html.toString('utf8').replace('<head>','<head>'+diagnostics).replace('</body>', '<script>window.__dhPageComplete=true;</script></body>');
+const page=optimized.replace('<head>','<head>'+diagnostics).replace('</body>', '<script>window.__dhPageComplete=true;</script></body>');
 await writeFile(new URL('../public/index.html',import.meta.url),page);
 console.log('Restored exact 60ZZ14ZK game HTML: '+html.length+' bytes.');
