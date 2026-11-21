@@ -5,10 +5,10 @@ function unreadMessages(){
  return (networkState.messages||[]).filter(m=>m.from!==networkState.seat&&m.id>(networkState.messageRead||0)).length;
 }
 function updateMessageBadges(){
- const count=unreadMessages();
+ const unread=unreadMessages(),count=(networkState?.messages||[]).filter(m=>m.from!==networkState.seat).length;
  document.querySelectorAll('#duoPreview .duo-message').forEach((button,index)=>{
   button.textContent=index===1&&count?'••• ('+count+')':'•••';
-  button.setAttribute('aria-label',index===0?'Send a message to '+networkNames.peter:'Messages from '+networkNames.peter+(count?', '+count+' unread':''));
+  button.setAttribute('aria-label',index===0?'Send a message to '+networkNames.peter:'Messages from '+networkNames.peter+(count?', '+count+' messages':'')+(unread?', '+unread+' unread':', all read'));
  });
 }
 function ensureMessagePanel(){
