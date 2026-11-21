@@ -5,10 +5,19 @@ function unreadMessages(){
  return (networkState.messages||[]).filter(m=>m.from!==networkState.seat&&m.id>(networkState.messageRead||0)).length;
 }
 function updateMessageBadges(){
- const unread=unreadMessages(),count=(networkState?.messages||[]).filter(m=>m.from!==networkState.seat).length;
+ const unread=unreadMessages(),messages=networkState?.messages||[];
  document.querySelectorAll('#duoPreview .duo-message').forEach((button,index)=>{
-  button.textContent=index===1&&count?'••• ('+count+')':'•••';
-  button.setAttribute('aria-label',index===0?'Send a message to '+networkNames.peter:'Messages from '+networkNames.peter+(count?', '+count+' messages':'')+(unread?', '+unread+' unread':', all read'));
+  const incoming=button.dataset.messageDirection?button.dataset.messageDirection==='incoming':index===1;
+  const count=messages.filter(m=>incoming?m.from!==networkState?.seat:m.from===networkState?.seat).length;
+  if(!button.querySelector('.duo-message-count')){
+   button.textContent='';const dots=document.createElement('span');dots.textContent='•••';dots.setAttribute('aria-hidden','true');button.appendChild(dots);
+   const badge=document.createElement('span');badge.className='duo-message-count';badge.setAttribute('aria-hidden','true');
+   badge.style.cssText='position:absolute!important;right:2px!important;top:-12px!important;display:inline-grid!important;place-items:center!important;min-width:38px!important;height:30px!important;padding:0 3px!important;border:2px solid #310b45!important;border-radius:18px!important;background:#baff18!important;color:#210b31!important;font:bold 21px/1 Arial!important;box-sizing:border-box!important;z-index:2!important;';
+   button.style.position='relative';button.style.overflow='visible';button.appendChild(badge);
+  }
+  const badge=button.querySelector('.duo-message-count');badge.textContent=count?'('+Math.min(2,count)+')':'';
+  badge.style.setProperty('display',count?'inline-grid':'none','important');
+  button.setAttribute('aria-label',incoming?'Messages from '+networkNames.peter+(count?', '+count+' messages':'')+(unread?', '+unread+' unread':', all read'):'Send a message to '+networkNames.peter+(count?', '+count+' sent messages':''));
  });
 }
 function ensureMessagePanel(){
@@ -30,7 +39,7 @@ function ensureMessagePanel(){
  `;document.head.appendChild(style);
  messagePanel=document.createElement('section');messagePanel.id='duoMessages';messagePanel.hidden=true;
  messagePanel.setAttribute('role','dialog');messagePanel.setAttribute('aria-modal','true');messagePanel.setAttribute('aria-labelledby','duoMessageTitle');
- messagePanel.innerHTML='<div class="message-card"><h2 id="duoMessageTitle"></h2><div id="duoMessageList" class="message-list"></div><form id="duoMessageForm"><label for="duoMessageDraft" id="duoMessageLabel">Your message</label><textarea id="duoMessageDraft" maxlength="280" placeholder="Type a message…"></textarea><div class="message-hint">Up to 280 characters. Only the latest two messages from each player are kept.</div><div id="duoMessageError" class="message-error" role="status"></div><button id="duoMessageSend" type="submit">SEND</button><button id="duoMessageDismiss" type="button">DISMISS</button></form></div>';
+ messagePanel.innerHTML='<div class="message-card"><h2 id="duoMessageTitle"></h2><div id="duoMessageList" class="message-list"></div><form id="duoMessageForm"><label for="duoMessageDraft" id="duoMessageLabel">Your message</label><textarea id="duoMessageDraft" maxlength="280" placeholder="Type a message…"></textarea><div class="message-hint">Up to 280 characters. Only the latest two messages from each player are kept.</div><div id="duoMessageError" class="message-error" role="status"></div><button id="duoMessageSend" type="submit">SEND</button><button id="duoMessageDismiss" type="button">Mark messages as read and close</button></form></div>';
  document.body.appendChild(messagePanel);
  document.getElementById('duoMessageDismiss').onclick=()=>closeMessages(true);
  document.getElementById('duoMessageForm').onsubmit=async event=>{

@@ -42,7 +42,7 @@ optimized=optimized.replace("ad.textContent='WATCH AN AD FOR FIFTY'", "ad.textCo
  .replace('Watch an ad for fifty, or visit the shop.', 'Use the temporary test top-up to add fifty Slime Bucks.')
  .replace("document.getElementById('duoLowAd').onclick=()=>{shortage.hidden=true;openDuoAd();};", "document.getElementById('duoLowAd').onclick=()=>{shortage.hidden=true;if(network){networkAction('testTopUp',{});return;}openDuoAd();};");
 const messagesUI=await readFile(new URL('../client/messages.js',import.meta.url),'utf8');
-optimized=optimized.replace("message.onclick=()=>alert('Messages will be available when your friend is connected.');", 'message.onclick=()=>openMessages(isMine);')
+optimized=optimized.replace("message.onclick=()=>alert('Messages will be available when your friend is connected.');", "message.dataset.messageDirection=isMine?'outgoing':'incoming';message.onclick=()=>openMessages(isMine);")
  .replace(' function playerNickname(){',messagesUI+'\n function playerNickname(){')
  .replace(' }\n function startOnlineClock(){', '  syncMessages();\n }\n function startOnlineClock(){')
  .replace("const previous=networkState;networkState=state;", "const previous=networkState;networkState=state;")
