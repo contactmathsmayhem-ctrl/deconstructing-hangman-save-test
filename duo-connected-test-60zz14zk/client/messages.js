@@ -5,10 +5,10 @@ function unreadMessages(){
  return (networkState.messages||[]).filter(m=>m.from!==networkState.seat&&m.id>(networkState.messageRead||0)).length;
 }
 function updateMessageBadges(){
- const unread=unreadMessages(),messages=networkState?.messages||[];
+ const unread=unreadMessages();
  document.querySelectorAll('#duoPreview .duo-message').forEach((button,index)=>{
   const incoming=button.dataset.messageDirection?button.dataset.messageDirection==='incoming':index===1;
-  const count=messages.filter(m=>incoming?m.from!==networkState?.seat:m.from===networkState?.seat).length;
+  const count=incoming?unread:0;
   if(!button.querySelector('.duo-message-count')){
    button.textContent='';const dots=document.createElement('span');dots.textContent='•••';dots.setAttribute('aria-hidden','true');button.appendChild(dots);
    const badge=document.createElement('span');badge.className='duo-message-count';badge.setAttribute('aria-hidden','true');
@@ -17,7 +17,7 @@ function updateMessageBadges(){
   }
   const badge=button.querySelector('.duo-message-count');badge.textContent=count?'('+Math.min(2,count)+')':'';
   badge.style.setProperty('display',count?'inline-grid':'none','important');
-  button.setAttribute('aria-label',incoming?'Messages from '+networkNames.peter+(count?', '+count+' messages':'')+(unread?', '+unread+' unread':', all read'):'Send a message to '+networkNames.peter+(count?', '+count+' sent messages':''));
+  button.setAttribute('aria-label',incoming?'Messages from '+networkNames.peter+(count?', '+count+' messages':'')+(unread?', '+unread+' unread':', all read'):'Send a message to '+networkNames.peter);
  });
 }
 function ensureMessagePanel(){
