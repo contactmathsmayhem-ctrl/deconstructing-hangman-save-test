@@ -30,7 +30,7 @@ function ensureMessagePanel(){
  `;document.head.appendChild(style);
  messagePanel=document.createElement('section');messagePanel.id='duoMessages';messagePanel.hidden=true;
  messagePanel.setAttribute('role','dialog');messagePanel.setAttribute('aria-modal','true');messagePanel.setAttribute('aria-labelledby','duoMessageTitle');
- messagePanel.innerHTML='<div class="message-card"><h2 id="duoMessageTitle"></h2><div id="duoMessageList" class="message-list"></div><form id="duoMessageForm"><label for="duoMessageDraft" id="duoMessageLabel">Your message</label><textarea id="duoMessageDraft" maxlength="280" placeholder="Type a message…"></textarea><div class="message-hint">Up to 280 characters. Messages stay in this match.</div><div id="duoMessageError" class="message-error" role="status"></div><button id="duoMessageSend" type="submit">SEND</button><button id="duoMessageDismiss" type="button">DISMISS</button></form></div>';
+ messagePanel.innerHTML='<div class="message-card"><h2 id="duoMessageTitle"></h2><div id="duoMessageList" class="message-list"></div><form id="duoMessageForm"><label for="duoMessageDraft" id="duoMessageLabel">Your message</label><textarea id="duoMessageDraft" maxlength="280" placeholder="Type a message…"></textarea><div class="message-hint">Up to 280 characters. Only the latest two messages from each player are kept.</div><div id="duoMessageError" class="message-error" role="status"></div><button id="duoMessageSend" type="submit">SEND</button><button id="duoMessageDismiss" type="button">DISMISS</button></form></div>';
  document.body.appendChild(messagePanel);
  document.getElementById('duoMessageDismiss').onclick=()=>closeMessages(true);
  document.getElementById('duoMessageForm').onsubmit=async event=>{

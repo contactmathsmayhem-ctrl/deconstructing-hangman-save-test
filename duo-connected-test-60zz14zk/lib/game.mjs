@@ -7,6 +7,15 @@ export const digest=v=>createHash('sha256').update(v).digest('hex');
 const equal=(a,b)=>a.length===b.length&&timingSafeEqual(Buffer.from(a),Buffer.from(b));
 export function inviteCode(){const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return [...randomBytes(10)].map(b=>alphabet[b%32]).join('');}
 export function nickname(value){if(typeof value!=='string')fail('Enter a nickname.',400);const name=value.trim();if(!name||name.length>32||/[\x00-\x1f<>]/.test(name))fail('Use a nickname of 1–32 plain-text characters.',400);return name;}
+function messageWindow(messages){
+ const counts=[0,0],kept=[];
+ for(let i=messages.length-1;i>=0;i--){const message=messages[i];if((message.from===0||message.from===1)&&counts[message.from]++<2)kept.push(message);}
+ return kept.reverse();
+}
+export function pruneMessages(room){
+ const kept=messageWindow(room.messages||[]);if(kept.length===(room.messages||[]).length)return false;
+ room.messages=kept;room.version++;return true;
+}
 const player=(name,secret)=>({name:nickname(name),tokenHash:digest(secret),character:null,balance:90,lost:[],part:null,locked:false,answer:null,answered:false,closed:false,next:'choice'});
 export function createRoom(code,name,secret,now=Date.now()){return {code,version:1,createdAt:now,expiresAt:now+6*3600000,phase:'lobby',round:1,difficulty:'MEDIUM',players:[player(name,secret),null],question:null,deadline:null,outcome:null,seen:[],used:{EASY:[],MEDIUM:[],HARD:[]}};}
 export function authorize(room,secret){if(typeof secret!=='string'||secret.length>100)fail('Invalid player token.',401);const hash=digest(secret);const seat=room.players.findIndex(p=>p&&equal(p.tokenHash,hash));if(seat<0)fail('Invalid player token.',401);return seat;}
@@ -51,7 +60,7 @@ export function act(room,seat,action,now=Date.now(),allowTest=false,allowTestTop
   const text=action.text.replace(/\r\n?/g,'\n').trim();
   if(!text||[...text].length>280||/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(text))fail('Use a message of 1–280 characters.',400);
   room.messageSeq=(room.messageSeq||0)+1;room.messages??=[];
-  room.messages.push({id:room.messageSeq,from:seat,text,createdAt:now});room.messages=room.messages.slice(-40);
+  room.messages.push({id:room.messageSeq,from:seat,text,createdAt:now});room.messages=messageWindow(room.messages);
  }else if(kind==='dismissMessages'){
   if(!Number.isInteger(action.through)||action.through<0||action.through>(room.messageSeq||0))fail('Invalid message receipt.',400);
   p.messageRead=Math.max(p.messageRead||0,action.through);
@@ -64,5 +73,5 @@ export function act(room,seat,action,now=Date.now(),allowTest=false,allowTestTop
  room.seen.push(requestKey);room.seen=room.seen.slice(-128);room.version++;
 }
 export function snapshot(room,seat,now=Date.now()){
- const revealed=room.phase==='result';return {messages:room.messages||[],messageRead:room.players[seat].messageRead||0,code:room.code,version:room.version,round:room.round,phase:room.phase,difficulty:room.difficulty,deadline:room.deadline,serverNow:now,expiresAt:room.expiresAt,seat,availableWagers:room.players[seat].character?wagers[room.players[seat].character].filter(r=>!room.players[seat].lost.includes(r[0])):[],outcome:room.outcome,question:room.question?{text:room.question.text,answers:room.question.answers,...(revealed?{correct:room.question.correct,explanation:room.question.explanation}:{})}:null,players:room.players.map((p,i)=>p?{name:p.name,character:p.character,balance:i===seat?p.balance:null,lost:p.lost.slice(),locked:p.locked,part:i===seat||revealed?p.part:null,answered:p.answered,answer:i===seat||revealed?p.answer:null,closed:p.closed,next:p.next}:null)};
+ const revealed=room.phase==='result';return {messages:messageWindow(room.messages||[]),messageRead:room.players[seat].messageRead||0,code:room.code,version:room.version,round:room.round,phase:room.phase,difficulty:room.difficulty,deadline:room.deadline,serverNow:now,expiresAt:room.expiresAt,seat,availableWagers:room.players[seat].character?wagers[room.players[seat].character].filter(r=>!room.players[seat].lost.includes(r[0])):[],outcome:room.outcome,question:room.question?{text:room.question.text,answers:room.question.answers,...(revealed?{correct:room.question.correct,explanation:room.question.explanation}:{})}:null,players:room.players.map((p,i)=>p?{name:p.name,character:p.character,balance:i===seat?p.balance:null,lost:p.lost.slice(),locked:p.locked,part:i===seat||revealed?p.part:null,answered:p.answered,answer:i===seat||revealed?p.answer:null,closed:p.closed,next:p.next}:null)};
 }
